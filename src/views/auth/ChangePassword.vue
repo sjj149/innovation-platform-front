@@ -101,7 +101,8 @@ const handleSubmit = async () => {
         newPassword: form.newPassword
       })
       ElMessage.success('密码修改成功，请重新登录')
-      userStore.logout()
+      // 修改密码后不执行CAS登出，只清除本地状态
+      await userStore.logout(false)
       router.push('/login')
     } catch {
       // 错误信息已由请求拦截器统一提示

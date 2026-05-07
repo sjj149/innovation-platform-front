@@ -16,6 +16,9 @@
       <el-form-item label="用户名">
         <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable />
       </el-form-item>
+      <el-form-item label="学号/工号">
+        <el-input v-model="searchForm.casUid" placeholder="请输入学号或工号" clearable />
+      </el-form-item>
       <el-form-item label="真实姓名">
         <el-input v-model="searchForm.realName" placeholder="请输入真实姓名" clearable />
       </el-form-item>
@@ -23,6 +26,7 @@
         <el-select v-model="searchForm.role" placeholder="请选择角色" clearable style="width: 160px">
           <el-option label="学生" value="STUDENT" />
           <el-option label="教师" value="TEACHER" />
+          <el-option label="学生管理员" value="STUDENT_ADMIN" />
           <el-option label="学院管理员" value="COLLEGE_ADMIN" />
           <el-option label="学校管理员" value="SCHOOL_ADMIN" />
         </el-select>
@@ -45,20 +49,38 @@
       </el-form-item>
     </SearchForm>
 
+    <!-- 统计信息 -->
+    <div class="statistics-bar">
+      <el-tag size="large" type="info">
+        <el-icon><User /></el-icon>
+        总注册人数：<strong>{{ total }}</strong> 人
+      </el-tag>
+    </div>
+
     <!-- 数据表格 -->
     <DataTable
       :data="userList"
       :loading="loading"
-      :total="total"
-      v-model:page="searchForm.pageNum"
-      v-model:pageSize="searchForm.pageSize"
-      @page-change="fetchUserList"
+      :show-index="true"
     >
       <el-table-column prop="username" label="用户名" min-width="120" />
+      <el-table-column prop="casUid" label="学号/工号" min-width="120">
+        <template #default="{ row }">
+          <span v-if="row.casUid" class="cas-uid-text">{{ row.casUid }}</span>
+          <span v-else class="no-cas-uid">-</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="realName" label="真实姓名" min-width="120" />
-      <el-table-column prop="role" label="角色" width="120">
+      <el-table-column prop="role" label="角色" width="100">
         <template #default="{ row }">
           <el-tag :type="getRoleType(row.role)">{{ getRoleName(row.role) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="authType" label="认证方式" width="100">
+        <template #default="{ row }">
+          <el-tag :type="getAuthType(row.authType)" size="small">
+            {{ getAuthTypeName(row.authType) }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="collegeName" label="所属学院" min-width="150" show-overflow-tooltip />
@@ -83,6 +105,19 @@
         </template>
       </el-table-column>
     </DataTable>
+
+    <!-- 分页 -->
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="searchForm.pageNum"
+        v-model:page-size="searchForm.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
 
     <!-- 创建/编辑用户对话框 -->
     <el-dialog
@@ -125,6 +160,7 @@
               <el-select v-model="form.role" placeholder="请选择角色" style="width: 100%">
                 <el-option label="学生" value="STUDENT" />
                 <el-option label="教师" value="TEACHER" />
+                <el-option label="学生管理员" value="STUDENT_ADMIN" />
                 <el-option label="学院管理员" value="COLLEGE_ADMIN" />
                 <el-option label="学校管理员" value="SCHOOL_ADMIN" />
               </el-select>
@@ -232,7 +268,7 @@
           </el-table-column>
           <el-table-column prop="description" label="说明" />
         </el-table>
-        <p class="note">注：角色可选值：STUDENT（学生）、TEACHER（教师）、COLLEGE_ADMIN（学院管理员）、SCHOOL_ADMIN（学校管理员）</p>
+        <p class="note">注：角色可选值：STUDENT（学生）、TEACHER（教师）、STUDENT_ADMIN（学生管理员）、COLLEGE_ADMIN（学院管理员）、SCHOOL_ADMIN（学校管理员）</p>
       </div>
       
       <template #footer>
@@ -246,7 +282,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Key, Upload, UploadFilled } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Key, Upload, UploadFilled, User } from '@element-plus/icons-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SearchForm from '@/components/common/SearchForm.vue'
 import DataTable from '@/components/common/DataTable.vue'
@@ -264,6 +300,7 @@ import { getAllColleges } from '@/api/modules/college'
 // 搜索表单
 const searchForm = reactive({
   username: '',
+  casUid: '',
   realName: '',
   role: '',
   collegeId: '',
@@ -351,6 +388,7 @@ const getRoleName = (role) => {
   const roleMap = {
     'STUDENT': '学生',
     'TEACHER': '教师',
+    'STUDENT_ADMIN': '学生管理员',
     'COLLEGE_ADMIN': '学院管理员',
     'SCHOOL_ADMIN': '学校管理员'
   }
@@ -362,10 +400,31 @@ const getRoleType = (role) => {
   const typeMap = {
     'STUDENT': 'info',
     'TEACHER': 'success',
+    'STUDENT_ADMIN': 'warning',
     'COLLEGE_ADMIN': 'warning',
     'SCHOOL_ADMIN': 'danger'
   }
   return typeMap[role] || 'info'
+}
+
+// 获取认证方式名称
+const getAuthTypeName = (authType) => {
+  const typeMap = {
+    'LOCAL': '本地',
+    'CAS': '统一认证',
+    'BOTH': '双认证'
+  }
+  return typeMap[authType] || authType || '本地'
+}
+
+// 获取认证方式标签类型
+const getAuthType = (authType) => {
+  const typeMap = {
+    'LOCAL': 'info',
+    'CAS': 'success',
+    'BOTH': 'warning'
+  }
+  return typeMap[authType] || 'info'
 }
 
 // 获取学院列表
@@ -415,6 +474,19 @@ const handleReset = () => {
       searchForm[key] = ''
     }
   })
+  fetchUserList()
+}
+
+// 每页条数变化
+const handleSizeChange = (size) => {
+  searchForm.pageSize = size
+  searchForm.pageNum = 1
+  fetchUserList()
+}
+
+// 页码变化
+const handlePageChange = (page) => {
+  searchForm.pageNum = page
   fetchUserList()
 }
 
@@ -547,7 +619,7 @@ const templateColumns = [
   { column: '真实姓名', required: true, description: '用户真实姓名' },
   { column: '邮箱', required: false, description: '联系邮箱' },
   { column: '手机号', required: false, description: '联系手机' },
-  { column: '角色', required: true, description: 'STUDENT/TEACHER/COLLEGE_ADMIN/SCHOOL_ADMIN' },
+  { column: '角色', required: true, description: 'STUDENT/TEACHER/STUDENT_ADMIN/COLLEGE_ADMIN/SCHOOL_ADMIN' },
   { column: '学院ID', required: false, description: '所属学院ID（与学院名称二选一）' },
   { column: '学院名称', required: false, description: '所属学院名称（与学院ID二选一）' },
   { column: '状态', required: false, description: '1-启用，0-禁用，默认启用' }
@@ -596,6 +668,28 @@ const handleImportSubmit = async () => {
   padding: 24px;
 }
 
+.statistics-bar {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.statistics-bar .el-tag {
+  font-size: 14px;
+  padding: 12px 16px;
+}
+
+.statistics-bar .el-icon {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .template-info {
   margin-top: 16px;
 }
@@ -617,5 +711,15 @@ const handleImportSubmit = async () => {
   font-size: 12px;
   color: #999;
   line-height: 1.5;
+}
+
+.cas-uid-text {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.no-cas-uid {
+  color: #999;
 }
 </style>

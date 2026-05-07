@@ -167,7 +167,7 @@ const { tableData: applications, loading, page, size, total, loadData, handlePag
         query.status = 'PENDING'
         query.approvalStatus = 'PENDING'
       } else if (isSchoolAdmin.value) {
-        query.status = 'APPROVED'
+        // 学校管理员可以越级审核：查看所有 approvalStatus=PENDING 的入驻申请
         query.approvalStatus = 'PENDING'
       } else {
         query.approvalStatus = 'PENDING'

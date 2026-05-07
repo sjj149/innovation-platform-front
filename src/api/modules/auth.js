@@ -40,3 +40,11 @@ export function refreshToken() {
 export function getCurrentUser() {
   return handleResponse(get('/users/me'))
 }
+
+/**
+ * 获取CAS退出登录地址
+ * @returns {Promise<{enabled: boolean, logoutUrl?: string, fullLogoutUrl?: string}>}
+ */
+export function getCasLogoutUrl() {
+  return handleResponse(get('/auth/cas/logout-url'))
+}

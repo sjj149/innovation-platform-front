@@ -27,7 +27,7 @@ export default [
     meta: {
       title: '空间预约审核',
       requiresAuth: true,
-      roles: ['COLLEGE_ADMIN', 'SCHOOL_ADMIN']
+      roles: ['STUDENT_ADMIN', 'COLLEGE_ADMIN', 'SCHOOL_ADMIN']
     }
   }
 ]

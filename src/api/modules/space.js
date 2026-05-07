@@ -100,3 +100,12 @@ export function getReservationsByStatus(status) {
 export function createSpace(data) {
     return handleResponse(post(`/spaces/create`, data))
 }
+
+/**
+ * 更新空间信息（管理员）
+ * @param {number|string} id - 空间 ID
+ * @param {Object} data - 空间表单数据
+ */
+export function updateSpace(id, data) {
+    return handleResponse(put(`/spaces/${id}`, data))
+}

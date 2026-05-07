@@ -29,49 +29,54 @@
         :collapse="isCollapsed"
         :collapse-transition="false"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><Odometer /></el-icon>
-          <template #title>首页</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/projects">
-          <el-icon><Document /></el-icon>
-          <template #title>项目管理</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/teams">
-          <el-icon><UserFilled /></el-icon>
-          <template #title>团队管理</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/spaces">
-          <el-icon><OfficeBuilding /></el-icon>
-          <template #title>空间预约</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/activities">
-          <el-icon><Calendar /></el-icon>
-          <template #title>活动管理</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/information-link">
-          <el-icon><Connection /></el-icon>
-          <template #title>信息对接</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/news">
-          <el-icon><Reading /></el-icon>
-          <template #title>新闻管理</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/persons">
-          <el-icon><Avatar /></el-icon>
-          <template #title>人员库</template>
-        </el-menu-item>
+          <el-menu-item index="/dashboard">
+            <el-icon><Odometer /></el-icon>
+            <template #title>首页</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/projects">
+            <el-icon><Document /></el-icon>
+            <template #title>项目管理</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/teams">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>团队管理</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/spaces">
+            <el-icon><OfficeBuilding /></el-icon>
+            <template #title>空间预约</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/activities">
+            <el-icon><Calendar /></el-icon>
+            <template #title>活动管理</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/information-link">
+            <el-icon><Connection /></el-icon>
+            <template #title>信息对接</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/news">
+            <el-icon><Reading /></el-icon>
+            <template #title>新闻管理</template>
+          </el-menu-item>
+          
+          <el-menu-item index="/persons">
+            <el-icon><Avatar /></el-icon>
+            <template #title>人员库</template>
+          </el-menu-item>
         
         <el-menu-item v-if="isAdmin" index="/admin/review">
           <el-icon><Edit /></el-icon>
           <template #title>审核中心</template>
+        </el-menu-item>
+
+        <el-menu-item v-if="isStudentAdmin" index="/spaces/admin">
+          <el-icon><OfficeBuilding /></el-icon>
+          <template #title>空间预约审核</template>
         </el-menu-item>
         
         <el-menu-item v-if="isSchoolAdmin" index="/admin/users">
@@ -104,6 +109,10 @@
             </div>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  个人资料
+                </el-dropdown-item>
                 <el-dropdown-item command="password">
                   <el-icon><Lock /></el-icon>
                   修改密码
@@ -154,6 +163,10 @@ const isAdmin = computed(() => {
   return role === 'COLLEGE_ADMIN' || role === 'SCHOOL_ADMIN'
 })
 
+const isStudentAdmin = computed(() => {
+  return userStore.userRole === 'STUDENT_ADMIN'
+})
+
 const isSchoolAdmin = computed(() => {
   return userStore.userRole === 'SCHOOL_ADMIN'
 })
@@ -164,13 +177,15 @@ const currentPageTitle = computed(() => {
     '/projects': '项目管理',
     '/teams': '团队管理',
     '/spaces': '空间预约',
+    '/spaces/admin': '空间预约审核',
     '/activities': '活动管理',
     '/information-link': '信息对接',
     '/news': '新闻管理',
     '/persons': '人员库',
     '/admin/review': '审核中心',
     '/admin/users': '用户管理',
-    '/change-password': '修改密码'
+    '/change-password': '修改密码',
+    '/profile': '个人资料'
   }
   return titleMap[route.path] || '创新创业服务系统'
 })
@@ -179,13 +194,23 @@ const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
 }
 
-const handleCommand = (command) => {
+const handleCommand = async (command) => {
   if (command === 'logout') {
-    userStore.logout()
+    // 调用logout，如果是CAS用户会返回CAS登出地址
+    const casLogoutUrl = await userStore.logout()
     ElMessage.success('已退出登录')
-    router.push('/login')
+    
+    if (casLogoutUrl) {
+      // CAS用户：跳转到CAS退出页面
+      window.location.href = casLogoutUrl
+    } else {
+      // 普通用户：跳转到本地登录页
+      router.push('/login')
+    }
   } else if (command === 'password') {
     router.push('/change-password')
+  } else if (command === 'profile') {
+    router.push('/profile')
   }
 }
 </script>

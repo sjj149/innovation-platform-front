@@ -233,7 +233,7 @@ import { STATUS_TEXT, STATUS_TYPE } from '@/constants'
 import { Refresh, Document, UserFilled, OfficeBuilding, Calendar } from '@element-plus/icons-vue'
  
 const userStore = useUserStore()
-const { isAdmin, isCollegeAdmin, isSchoolAdmin } = usePermission()
+const { isAdmin, isStudentAdmin, isCollegeAdmin, isSchoolAdmin } = usePermission()
 
 const stats = reactive({
   totalProjects: 0,
@@ -417,6 +417,16 @@ const computeAdminPendingCount = async () => {
   }
 }
 
+const computeStudentAdminPendingCount = async () => {
+  try {
+    const pendingReservations = await getPendingReservations().catch(() => [])
+    return Array.isArray(pendingReservations) ? pendingReservations.length : 0
+  } catch (e) {
+    console.error('计算学生管理员待审核数量失败:', e)
+    return 0
+  }
+}
+
 const computeUserPendingCount = async (myProjectList) => {
   try {
     const userId = userStore.user?.id
@@ -489,7 +499,9 @@ const loadData = async () => {
     // - 其他角色：自己提交且仍在审批中的申请总数
     const pendingTotal = isAdmin.value
       ? await computeAdminPendingCount()
-      : await computeUserPendingCount(myProjectList)
+      : isStudentAdmin.value
+        ? await computeStudentAdminPendingCount()
+        : await computeUserPendingCount(myProjectList)
     stats.pendingProjects = pendingTotal
 
     stats.myProjects = myProjectList.length

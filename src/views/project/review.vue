@@ -190,7 +190,8 @@ const getProjectDisplayApprovalType = (row) => {
 const canReviewProject = (row) => {
   if (!row || row.approvalStatus !== 'PENDING') return false
   if (isCollegeAdmin.value && isWaitingCollegeProject(row)) return true
-  if (isSchoolAdmin.value && isWaitingSchoolProject(row)) return true
+  // 学校管理员可以越级审核学院待审项目
+  if (isSchoolAdmin.value && (isWaitingSchoolProject(row) || isWaitingCollegeProject(row))) return true
   return false
 }
 

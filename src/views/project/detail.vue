@@ -5,18 +5,32 @@
         <div class="card-header">
           <span>项目详情</span>
           <div class="header-actions">
-            <el-button v-if="isLeader" type="primary" size="default" @click="handleEditBasic">编辑基本信息</el-button>
-            <el-button v-if="isLeader && project?.teamId && linkedMembers.length" type="primary" size="default" @click="showTransferDialog = true">更换负责人</el-button>
-            <el-button v-if="isLeader" type="warning" size="default" @click="handleVacateLeader">招募负责人</el-button>
-            <el-button v-if="isLeaderVacant && isTeacher" type="success" size="default" :loading="takeoverLoading" @click="handleTakeover">申请接管</el-button>
+            <el-button v-if="isLeader" type="primary" @click="handleEditBasic">编辑基本信息</el-button>
+            <el-button
+              v-if="isLeader && project?.teamId && linkedMembers.length"
+              type="primary"
+              @click="showTransferDialog = true"
+            >
+              更换负责人
+            </el-button>
+            <el-button v-if="isLeader" type="warning" @click="handleVacateLeader">招募负责人</el-button>
+            <el-button
+              v-if="isLeaderVacant && isTeacher"
+              type="success"
+              :loading="takeoverLoading"
+              @click="handleTakeover"
+            >
+              申请接管
+            </el-button>
             <el-button @click="goBack">返回</el-button>
           </div>
         </div>
       </template>
 
-      <div v-if="loading" style="text-align: center; padding: 40px;">
+      <div v-if="loading" class="loading-wrap">
         <el-icon class="is-loading"><Loading /></el-icon>
       </div>
+
       <div v-else-if="project">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="项目标题">{{ project.title }}</el-descriptions-item>
@@ -39,14 +53,13 @@
           <el-descriptions-item label="开始时间">{{ formatDateTime(project.startTime) }}</el-descriptions-item>
           <el-descriptions-item label="结束时间">{{ formatDateTime(project.endTime) }}</el-descriptions-item>
           <el-descriptions-item label="项目描述" :span="2">
-            <div style="white-space: pre-wrap;">{{ project.description || '暂无描述' }}</div>
+            <div class="pre-wrap">{{ project.description || '暂无描述' }}</div>
           </el-descriptions-item>
           <el-descriptions-item v-if="project.reviewComment" label="审核意见" :span="2">
-            <div style="white-space: pre-wrap;">{{ project.reviewComment }}</div>
+            <div class="pre-wrap">{{ project.reviewComment }}</div>
           </el-descriptions-item>
         </el-descriptions>
 
-        <!-- 关联团队与队员信息（项目关联了团队时显示） -->
         <template v-if="project.teamId">
           <el-divider>关联团队与队员</el-divider>
           <div v-loading="loadingTeam" class="linked-team-section">
@@ -69,36 +82,46 @@
             </div>
           </div>
         </template>
+
+        <el-divider>项目对接</el-divider>
+        <ProjectDockingPanel :project="project" />
       </div>
     </el-card>
 
-    <!-- 更换负责人：选择团队成员 -->
     <el-dialog v-model="showTransferDialog" title="更换负责人" width="400px">
       <p>将项目负责人身份转给以下团队成员之一：</p>
       <el-select v-model="selectedNewLeaderId" placeholder="请选择新负责人" style="width: 100%" filterable>
         <el-option
-          v-for="m in linkedMembers.filter(m => m.userId !== project?.leaderId)"
-          :key="m.userId"
-          :label="`${m.userName}（${m.role === 'LEADER' ? '队长' : '成员'}）`"
-          :value="m.userId"
+          v-for="member in linkedMembers.filter(item => item.userId !== project?.leaderId)"
+          :key="member.userId"
+          :label="`${member.userName}（${member.role === 'LEADER' ? '队长' : '成员'}）`"
+          :value="member.userId"
         />
       </el-select>
       <template #footer>
         <el-button @click="showTransferDialog = false">取消</el-button>
-        <el-button type="primary" :loading="transferLoading" :disabled="!selectedNewLeaderId" @click="confirmTransfer">确定</el-button>
+        <el-button
+          type="primary"
+          :loading="transferLoading"
+          :disabled="!selectedNewLeaderId"
+          @click="confirmTransfer"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { getProjectById, transferLeader, vacateLeader } from '@/api/modules/project'
 import { getTeamById, getTeamMembers } from '@/api/modules/team'
 import { applyTakeoverProject } from '@/api/modules/informationLink'
+import ProjectDockingPanel from '@/components/ProjectDockingPanel.vue'
 import { useUserStore } from '@/stores/user'
 import { formatDateTime } from '@/utils/format'
 
@@ -120,7 +143,7 @@ const isLeader = computed(() => project.value?.leaderId != null && userStore.use
 const isLeaderVacant = computed(() => project.value?.leaderId == null)
 const isTeacher = computed(() => userStore.user?.role === 'TEACHER')
 
-const getStatusType = (status) => {
+const getStatusType = status => {
   const statusMap = {
     DRAFT: 'info',
     PENDING: 'warning',
@@ -132,7 +155,7 @@ const getStatusType = (status) => {
   return statusMap[status] || ''
 }
 
-const getStatusText = (status) => {
+const getStatusText = status => {
   const statusMap = {
     DRAFT: '草稿',
     PENDING: '待审核',
@@ -162,8 +185,8 @@ const confirmTransfer = async () => {
     selectedNewLeaderId.value = null
     project.value = await getProjectById(project.value.id)
     await loadLinkedTeamAndMembers()
-  } catch (e) {
-    ElMessage.error(e?.message || '更换失败')
+  } catch (error) {
+    ElMessage.error(error?.message || '更换失败')
   } finally {
     transferLoading.value = false
   }
@@ -172,15 +195,17 @@ const confirmTransfer = async () => {
 const handleVacateLeader = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要发起招募负责人吗？您将不再担任负责人，项目会进入无人接管列表，有意者可联系您。',
+      '确定要发起招募负责人吗？你将不再担任负责人，项目会进入无人接管列表。',
       '招募负责人',
       { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
     )
     await vacateLeader(project.value.id)
     ElMessage.success('已设为虚位以待，项目已进入无人接管列表')
     project.value = await getProjectById(project.value.id)
-  } catch (e) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '操作失败')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '操作失败')
+    }
   }
 }
 
@@ -191,8 +216,8 @@ const handleTakeover = async () => {
     await applyTakeoverProject(project.value.id)
     ElMessage.success('申请接管成功')
     project.value = await getProjectById(project.value.id)
-  } catch (e) {
-    ElMessage.error(e?.message || '申请失败')
+  } catch (error) {
+    ElMessage.error(error?.message || '申请失败')
   } finally {
     takeoverLoading.value = false
   }
@@ -241,6 +266,11 @@ onMounted(async () => {
   padding: 20px;
 }
 
+.loading-wrap {
+  text-align: center;
+  padding: 40px;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -252,6 +282,10 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
 }
 
 .linked-team-section {
@@ -272,6 +306,7 @@ onMounted(async () => {
   text-decoration: none;
   font-weight: 500;
 }
+
 .team-link:hover {
   text-decoration: underline;
 }

@@ -13,7 +13,7 @@ const api = axios.create({
  * 优先从 store 获取，如果没有则从 localStorage 获取（解决刷新后 token 丢失问题）
  */
 function getValidToken() {
-  const userStore = useUserStore()
+  let userStore = useUserStore()
   // 优先从 store 获取
   if (userStore.token) {
     return userStore.token
@@ -51,7 +51,8 @@ api.interceptors.response.use(
       const { status, data } = error.response
       if (status === 401) {
         const userStore = useUserStore()
-        userStore.logout()
+        // 401可能是token过期或被踢出（CAS单点登出），不执行CAS登出
+        userStore.logout(false)
         ElMessage.error('登录已过期，请重新登录')
         window.location.href = '/login'
       } else {

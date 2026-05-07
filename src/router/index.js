@@ -14,6 +14,7 @@ import informationLinkRoutes from './modules/informationLink'
 import newsRoutes from './modules/news'
 import entryApplicationRoutes from './modules/entryApplication'
 import adminRoutes from './modules/admin'
+import userRoutes from './modules/user'
 
 const routes = [
   ...authRoutes,
@@ -34,6 +35,9 @@ const routes = [
       ...newsRoutes,
       ...entryApplicationRoutes,
       ...adminRoutes,
+
+      // 个人中心
+      ...userRoutes,
     ]
   },
 

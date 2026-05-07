@@ -6,7 +6,7 @@
           <span>空间预约管理</span>
           <div>
             <el-button @click="showMyReservations">我的预约</el-button>
-            <el-button v-if="isAdmin" @click="goToAdmin">预约审核</el-button>
+            <el-button v-if="canReviewSpaceReservations" @click="goToAdmin">预约审核</el-button>
             <el-button v-if="isAdmin" @click="handleOpenCreateSpace">创建入驻</el-button>
             <el-button type="primary" @click="handleReserve">预约空间</el-button>
           </div>
@@ -68,6 +68,14 @@
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleViewDetail(row.id)">查看详情</el-button>
+            <el-button
+              v-if="isAdmin"
+              link
+              type="warning"
+              @click="handleOpenEditSpace(row)"
+            >
+              编辑
+            </el-button>
             <el-button
               v-if="row.status === 'AVAILABLE'"
               link
@@ -207,7 +215,7 @@
     </el-dialog>
 
 <!--创建入驻空间-->
-    <el-dialog v-model="createSpaceVisible" title="新增空间/教室入驻" width="500px" destroy-on-close>
+    <el-dialog v-model="createSpaceVisible" :title="isEditingSpace ? '编辑空间' : '新增空间/教室入驻'" width="500px" destroy-on-close>
       <el-form :model="spaceForm" ref="createSpaceFormRef" label-width="100px">
         <el-form-item label="空间名称" required>
           <el-input v-model="spaceForm.name" placeholder="请输入空间名称" />
@@ -224,7 +232,7 @@
       </el-form>
       <template #footer>
         <el-button @click="createSpaceVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="submitSpace">立即创建</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="isEditingSpace ? submitEditSpace() : submitSpace()">{{ isEditingSpace ? '保存修改' : '立即创建' }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -235,13 +243,13 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatTime } from '@/utils/format'
-import { createSpace, getSpaces, createReservation, getMyReservations, cancelReservation, getSpaceOccupiedSlots, updateSpaceStatus } from '@/api/modules/space'
+import { createSpace, getSpaces, createReservation, getMyReservations, cancelReservation, getSpaceOccupiedSlots, updateSpaceStatus, updateSpace } from '@/api/modules/space'
 import { usePermission } from '@/composables/usePermission'
 import { STATUS_TEXT, STATUS_TYPE } from '@/constants'
 import dayjs from 'dayjs'
 
 const router = useRouter()
-const { isAdmin } = usePermission()
+const { isAdmin, canReviewSpaceReservations } = usePermission()
 
 const spaces = ref([])
 const allSpaces = ref([])
@@ -271,6 +279,8 @@ const reservationForm = reactive({
 
 // --- 创建空间（管理员）相关 ---
 const createSpaceVisible = ref(false)
+const isEditingSpace = ref(false)
+const editingSpaceId = ref(null)
 const submitLoading = ref(false)
 const createSpaceFormRef = ref(null)
 const spaceForm = reactive({
@@ -281,8 +291,36 @@ const spaceForm = reactive({
   status: 'AVAILABLE'
 })
 const handleOpenCreateSpace = () => {
+  isEditingSpace.value = false
+  editingSpaceId.value = null
   createSpaceVisible.value = true
   Object.assign(spaceForm, { name: '', location: '', capacity: 10, description: '', status: 'AVAILABLE' })
+}
+const handleOpenEditSpace = (row) => {
+  isEditingSpace.value = true
+  editingSpaceId.value = row.id
+  createSpaceVisible.value = true
+  Object.assign(spaceForm, {
+    name: row.name || '',
+    location: row.location || '',
+    capacity: row.capacity || 10,
+    description: row.description || '',
+    status: row.status || 'AVAILABLE'
+  })
+}
+const submitEditSpace = async () => {
+  if (!spaceForm.name || !spaceForm.location) return ElMessage.warning('请填写名称和位置')
+  submitLoading.value = true
+  try {
+    await updateSpace(editingSpaceId.value, spaceForm)
+    ElMessage.success('空间更新成功！')
+    createSpaceVisible.value = false
+    loadSpaces()
+  } catch (error) {
+    ElMessage.error(error.message || '更新失败')
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 const submitSpace = async () => {
