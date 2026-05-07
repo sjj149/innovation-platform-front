@@ -26,6 +26,7 @@
         <el-select v-model="searchForm.role" placeholder="请选择角色" clearable style="width: 160px">
           <el-option label="学生" value="STUDENT" />
           <el-option label="教师" value="TEACHER" />
+          <el-option label="学生管理员" value="STUDENT_ADMIN" />
           <el-option label="学院管理员" value="COLLEGE_ADMIN" />
           <el-option label="学校管理员" value="SCHOOL_ADMIN" />
         </el-select>
@@ -159,6 +160,7 @@
               <el-select v-model="form.role" placeholder="请选择角色" style="width: 100%">
                 <el-option label="学生" value="STUDENT" />
                 <el-option label="教师" value="TEACHER" />
+                <el-option label="学生管理员" value="STUDENT_ADMIN" />
                 <el-option label="学院管理员" value="COLLEGE_ADMIN" />
                 <el-option label="学校管理员" value="SCHOOL_ADMIN" />
               </el-select>
@@ -266,7 +268,7 @@
           </el-table-column>
           <el-table-column prop="description" label="说明" />
         </el-table>
-        <p class="note">注：角色可选值：STUDENT（学生）、TEACHER（教师）、COLLEGE_ADMIN（学院管理员）、SCHOOL_ADMIN（学校管理员）</p>
+        <p class="note">注：角色可选值：STUDENT（学生）、TEACHER（教师）、STUDENT_ADMIN（学生管理员）、COLLEGE_ADMIN（学院管理员）、SCHOOL_ADMIN（学校管理员）</p>
       </div>
       
       <template #footer>
@@ -386,6 +388,7 @@ const getRoleName = (role) => {
   const roleMap = {
     'STUDENT': '学生',
     'TEACHER': '教师',
+    'STUDENT_ADMIN': '学生管理员',
     'COLLEGE_ADMIN': '学院管理员',
     'SCHOOL_ADMIN': '学校管理员'
   }
@@ -397,6 +400,7 @@ const getRoleType = (role) => {
   const typeMap = {
     'STUDENT': 'info',
     'TEACHER': 'success',
+    'STUDENT_ADMIN': 'warning',
     'COLLEGE_ADMIN': 'warning',
     'SCHOOL_ADMIN': 'danger'
   }
@@ -615,7 +619,7 @@ const templateColumns = [
   { column: '真实姓名', required: true, description: '用户真实姓名' },
   { column: '邮箱', required: false, description: '联系邮箱' },
   { column: '手机号', required: false, description: '联系手机' },
-  { column: '角色', required: true, description: 'STUDENT/TEACHER/COLLEGE_ADMIN/SCHOOL_ADMIN' },
+  { column: '角色', required: true, description: 'STUDENT/TEACHER/STUDENT_ADMIN/COLLEGE_ADMIN/SCHOOL_ADMIN' },
   { column: '学院ID', required: false, description: '所属学院ID（与学院名称二选一）' },
   { column: '学院名称', required: false, description: '所属学院名称（与学院ID二选一）' },
   { column: '状态', required: false, description: '1-启用，0-禁用，默认启用' }

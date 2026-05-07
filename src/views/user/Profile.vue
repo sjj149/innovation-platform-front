@@ -184,6 +184,7 @@ const getRoleType = (role) => {
   const types = {
     'STUDENT': '',
     'TEACHER': 'success',
+    'STUDENT_ADMIN': 'warning',
     'COLLEGE_ADMIN': 'warning',
     'SCHOOL_ADMIN': 'danger'
   }
@@ -194,6 +195,7 @@ const getRoleText = (role) => {
   const texts = {
     'STUDENT': '学生',
     'TEACHER': '教师',
+    'STUDENT_ADMIN': '学生管理员',
     'COLLEGE_ADMIN': '学院管理员',
     'SCHOOL_ADMIN': '学校管理员'
   }

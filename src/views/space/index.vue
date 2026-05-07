@@ -6,7 +6,7 @@
           <span>空间预约管理</span>
           <div>
             <el-button @click="showMyReservations">我的预约</el-button>
-            <el-button v-if="isAdmin" @click="goToAdmin">预约审核</el-button>
+            <el-button v-if="canReviewSpaceReservations" @click="goToAdmin">预约审核</el-button>
             <el-button v-if="isAdmin" @click="handleOpenCreateSpace">创建入驻</el-button>
             <el-button type="primary" @click="handleReserve">预约空间</el-button>
           </div>
@@ -249,7 +249,7 @@ import { STATUS_TEXT, STATUS_TYPE } from '@/constants'
 import dayjs from 'dayjs'
 
 const router = useRouter()
-const { isAdmin } = usePermission()
+const { isAdmin, canReviewSpaceReservations } = usePermission()
 
 const spaces = ref([])
 const allSpaces = ref([])

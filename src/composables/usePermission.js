@@ -62,6 +62,13 @@ export function usePermission() {
   })
 
   /**
+   * 是否为学生管理员
+   */
+  const isStudentAdmin = computed(() => {
+    return getCurrentRole() === 'STUDENT_ADMIN'
+  })
+
+  /**
    * 是否为学院管理员
    */
   const isCollegeAdmin = computed(() => {
@@ -80,6 +87,14 @@ export function usePermission() {
    */
   const isStudent = computed(() => {
     return getCurrentRole() === 'STUDENT'
+  })
+
+  /**
+   * 是否可以审核空间预约
+   */
+  const canReviewSpaceReservations = computed(() => {
+    const role = getCurrentRole()
+    return role === 'STUDENT_ADMIN' || role === 'COLLEGE_ADMIN' || role === 'SCHOOL_ADMIN'
   })
 
   /**
@@ -106,9 +121,11 @@ export function usePermission() {
     userRole,
     isAdmin,
     isSchoolAdmin,
+    isStudentAdmin,
     isCollegeAdmin,
     isTeacher,
     isStudent,
+    canReviewSpaceReservations,
     hasRole,
     hasAnyRole
   }
